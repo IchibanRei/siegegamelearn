@@ -20,11 +20,13 @@ typedef struct{
   bool collided;  // did this player collide
   bool human;	  // is this player a human
 } Player;
-
 Player players[2]; // two players
 
+typedef enum { D_RIGHT, D_DOWN, D_LEFT, D_UP } Direction;
 const char BOX_CHARS[8] = { '+', '+', '+', '+',
  		 	    '-', '-', '|', '|' };
+const sbyte DIR_X[4] = { 1, 0, -1, 0 };
+const sbyte DIR_Y[4] = { 0, -1, 0, 1 };
 
 void draw_box(byte x, byte y, byte x2, byte y2, const char* chars){
   byte x1 = x;
@@ -60,7 +62,12 @@ void init_game(){
 }
 
 void reset_players() {
-  
+  players[0].x = players[0].y = 5;
+  players[0].dir = D_RIGHT;
+  players[1].x = COLS - 6;
+  players[1].y = ROWS - 6;
+  players[1].dir = D_LEFT;
+  players[0].collided = players[1].collided = 0;
 }
 
 void play_round() {
@@ -68,8 +75,56 @@ void play_round() {
   clrscr();
   textcolor(COLOR_WHITE);
   draw_playfield();
+  while(1) {
+    if (players[0].collided || players[1].collided) break;
+  }
+  flash_colliders();
 }
 
+void human_control(byte p) {
+  byte dir = 0xff;
+  char joy;
+  if(!p->human) return; // if not a human return
+  if(!kbhit()) return; // return if no key hit
+  joy = joyread(0); // read first joystick
+  if(JOY_UP(joy))dir = D_UP;
+  if(JOY_LEFT(joy))dir = D_LEFT;
+  if(JOY_RIGHT(joy))dir = D_RIGHT;
+  if(JOY_DOWN(joy))dir = D_DOWN;
+  // don't let the player reverse direction
+  if(dir < 0x80 && dir != (p->dir^2)) {
+    p->dir = dir;
+  }
+}
+
+void draw_player (Player* p) {
+  cputcxy(p->x, p->y, p->head_attr);
+}
+
+void move_player(Player* p) {
+  cputcxy(p->x, p->y, p->tail_attr);
+  p->x += DIR_X[p->dir];
+  p->y += DIR_Y[p->dir];
+  if((readcharxy(p->x, p->y) & 0x7f) != ' ') {
+    p->collided = 1;
+    draw_player(p);
+  }
+}
+
+void make_move() {
+  byte i;
+  for (i = 0; i < frames_per_move; i++) {
+    human_control(&players[0]);
+  }
+  ai_control(&players[0]);
+  ai_control(&players[1]);
+  // if players collide, 2nd player gets the point
+  textcolor(COLOR_CYAN);
+  move_player(&players[1]);
+  textcolor(COLOR_YELLOW);
+  move_player(&players[0]);
+  textcolor(COLOR_WHITE);
+}
 
 
 void main(void) {
