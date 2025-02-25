@@ -24,7 +24,7 @@ typedef struct{
 Player players[2]; // two players
 
 const char BOX_CHARS[8] = { '+', '+', '+', '+',
- 		 	    '-', '-', '-', '-' };
+ 		 	    '-', '-', '|', '|' };
 
 void draw_box(byte x, byte y, byte x2, byte y2, const char* chars){
   byte x1 = x;
@@ -56,8 +56,21 @@ void init_game(){
   players[0].tail_attr = '#';
   players[1].head_attr = '2';
   players[1].tail_attr = '*';
-  //frames_per_move = START_SPEED;
+  frames_per_move = START_SPEED;
 }
+
+void reset_players() {
+  
+}
+
+void play_round() {
+  reset_players();
+  clrscr();
+  textcolor(COLOR_WHITE);
+  draw_playfield();
+}
+
+
 
 void main(void) {
   clrscr();
