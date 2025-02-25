@@ -70,6 +70,27 @@ void reset_players() {
   players[0].collided = players[1].collided = 0;
 }
 
+byte readcharxy (byte x, byte y) {
+  return PEEK(SCRNADR(0x400, x, y));
+}
+
+void draw_player (Player* p) {
+  cputcxy(p->x, p->y, p->head_attr);
+}
+
+void flash_colliders() {
+  byte i;
+  // flash players that collided
+  for(i = 0;i < 56; i++) {
+    delay(2);
+    revers(players[0].collided && (i&1));
+    draw_player(&players[0]);
+    revers(&players[1].collided && (i&1));
+    draw_player(&players[1]);
+  }
+  revers(0);
+}
+
 void play_round() {
   reset_players();
   clrscr();
@@ -86,7 +107,7 @@ void human_control(byte p) {
   char joy;
   if(!p->human) return; // if not a human return
   if(!kbhit()) return; // return if no key hit
-  joy = joyread(0); // read first joystick
+  joy = joy_read(0); // read first joystick
   if(JOY_UP(joy))dir = D_UP;
   if(JOY_LEFT(joy))dir = D_LEFT;
   if(JOY_RIGHT(joy))dir = D_RIGHT;
@@ -95,10 +116,6 @@ void human_control(byte p) {
   if(dir < 0x80 && dir != (p->dir^2)) {
     p->dir = dir;
   }
-}
-
-void draw_player (Player* p) {
-  cputcxy(p->x, p->y, p->head_attr);
 }
 
 void move_player(Player* p) {
