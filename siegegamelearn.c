@@ -10,6 +10,8 @@
 #include "common.h"
 //#link "common.c"
 
+
+
 typedef struct{
   byte x; 	  // x coordinate
   byte y; 	  // y coordinate
@@ -27,6 +29,14 @@ const char BOX_CHARS[8] = { '+', '+', '+', '+',
  		 	    '-', '-', '|', '|' };
 const sbyte DIR_X[4] = { 1, 0, -1, 0 };
 const sbyte DIR_Y[4] = { 0, -1, 0, 1 };
+
+byte frames_per_move;
+
+void delay(byte count) {
+  while (count--) {
+    waitvsync();
+  }
+}
 
 byte readcharxy (byte x, byte y) {
   return PEEK(SCRNADR(0x400, x, y));
