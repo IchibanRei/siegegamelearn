@@ -28,6 +28,14 @@ const char BOX_CHARS[8] = { '+', '+', '+', '+',
 const sbyte DIR_X[4] = { 1, 0, -1, 0 };
 const sbyte DIR_Y[4] = { 0, -1, 0, 1 };
 
+byte readcharxy (byte x, byte y) {
+  return PEEK(SCRNADR(0x400, x, y));
+}
+
+void draw_player(Player* p) {
+  cputcxy(p->x, p->y, p->head_attr);
+}
+
 void draw_box(byte x, byte y, byte x2, byte y2, const char* chars){
   byte x1 = x;
   cputcxy(x, y, chars[2]);
@@ -70,14 +78,6 @@ void reset_players() {
   players[0].collided = players[1].collided = 0;
 }
 
-byte readcharxy (byte x, byte y) {
-  return PEEK(SCRNADR(0x400, x, y));
-}
-
-void draw_player (Player* p) {
-  cputcxy(p->x, p->y, p->head_attr);
-}
-
 void flash_colliders() {
   byte i;
   // flash players that collided
@@ -115,6 +115,23 @@ void human_control(byte p) {
   // don't let the player reverse direction
   if(dir < 0x80 && dir != (p->dir^2)) {
     p->dir = dir;
+  }
+}
+
+void ai_try_dir() {
+	
+}
+
+void ai_Control() {
+  if (!ai_try_dir(p, dir, 0)) { // blocked ahead?
+    ai_try_dir(p, dir+1, 0); // try turning right
+    ai_try_dir(p, dir-1, 0); // try turning left
+  } 
+  else {
+    // look ahead a random + of squares to left/right
+    ai_try_dir(p, dir-1, 0) && ai_try_dir(p, dir-1, 1 + (rand() & 3));
+    ai_try_dir(p, dir+1, 0) && ai_try_dir(p, dir+1, 1 + (rand() & 3));
+    ai_try_dir(p, dir, rand() & 3);
   }
 }
 
