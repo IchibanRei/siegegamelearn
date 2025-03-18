@@ -10,7 +10,11 @@
 #include "common.h"
 //#link "common.c"
 
-
+void delay(byte count) {
+  while(count--) {
+    waitvsync();
+  }
+}
 
 typedef struct{
   byte x; 	  // x coordinate
@@ -24,27 +28,17 @@ typedef struct{
 } Player;
 Player players[2]; // two players
 
+byte frames_per_move; // speed of the game
+
+#define START_SPEED 12
+#define MAX_SPEED 5
+#define MAX_SCORE 7
+
 typedef enum { D_RIGHT, D_DOWN, D_LEFT, D_UP } Direction;
 const char BOX_CHARS[8] = { '+', '+', '+', '+',
  		 	    '-', '-', '|', '|' };
 const sbyte DIR_X[4] = { 1, 0, -1, 0 };
 const sbyte DIR_Y[4] = { 0, -1, 0, 1 };
-
-byte frames_per_move;
-
-void delay(byte count) {
-  while (count--) {
-    waitvsync();
-  }
-}
-
-byte readcharxy (byte x, byte y) {
-  return PEEK(SCRNADR(0x400, x, y));
-}
-
-void draw_player(Player* p) {
-  cputcxy(p->x, p->y, p->head_attr);
-}
 
 void draw_box(byte x, byte y, byte x2, byte y2, const char* chars){
   byte x1 = x;
@@ -88,6 +82,14 @@ void reset_players() {
   players[0].collided = players[1].collided = 0;
 }
 
+byte readcharxy (byte x, byte y) {
+  return PEEK(SCRNADR(0x400, x, y));
+}
+
+void draw_player (Player* p) {
+  cputcxy(p->x, p->y, p->head_attr);
+}
+
 void flash_colliders() {
   byte i;
   // flash players that collided
@@ -112,7 +114,7 @@ void play_round() {
   flash_colliders();
 }
 
-void human_control(byte p) {
+void human_control(Player *p) {
   byte dir = 0xff;
   char joy;
   if(!p->human) return; // if not a human return
@@ -125,23 +127,6 @@ void human_control(byte p) {
   // don't let the player reverse direction
   if(dir < 0x80 && dir != (p->dir^2)) {
     p->dir = dir;
-  }
-}
-
-void ai_try_dir() {
-	
-}
-
-void ai_Control() {
-  if (!ai_try_dir(p, dir, 0)) { // blocked ahead?
-    ai_try_dir(p, dir+1, 0); // try turning right
-    ai_try_dir(p, dir-1, 0); // try turning left
-  } 
-  else {
-    // look ahead a random + of squares to left/right
-    ai_try_dir(p, dir-1, 0) && ai_try_dir(p, dir-1, 1 + (rand() & 3));
-    ai_try_dir(p, dir+1, 0) && ai_try_dir(p, dir+1, 1 + (rand() & 3));
-    ai_try_dir(p, dir, rand() & 3);
   }
 }
 
@@ -160,8 +145,8 @@ void make_move() {
   for (i = 0; i < frames_per_move; i++) {
     human_control(&players[0]);
   }
-  ai_control(&players[0]);
-  ai_control(&players[1]);
+  //ai_control(&players[0]);
+  //ai_control(&players[1]);
   // if players collide, 2nd player gets the point
   textcolor(COLOR_CYAN);
   move_player(&players[1]);
@@ -175,5 +160,6 @@ void main(void) {
   clrscr();
   draw_playfield();
   getchar();
+  make_move();
   
 }
