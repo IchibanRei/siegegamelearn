@@ -130,6 +130,33 @@ void human_control(Player *p) {
   }
 }
 
+byte ai_try_dir(Player *p, Direction dir, byte shift) {
+  byte x, y;
+  dir &=3;
+  x = p->x + (DIR_X[dir] << shift);
+  y = p->y + (DIR_Y[dir] << shift);
+  if(x < COLS && y < ROWS
+     && (readcharxy(x, y) & 0x7f) == ' ') {
+    return 1;
+  }
+  else {
+    return 0;
+  }
+}
+
+void ai_control(Player *p) {
+  Direction dir;
+  if(!ai_try_dir(p, dir, 0)) { //blocked ahead
+    ai_try_dir(p, dir+1, 0); // try turning right
+    ai_try_dir(p, dir-1, 0); // try turning left
+  }
+  else {
+    ai_try_dir(p, dir-1, 0) && ai_try_dir(p, dir-1, 1+(rand() & 3));
+    ai_try_dir(p, dir+1, 0) && ai_try_dir(p, dir+1, 1+(rand() & 3));
+    ai_try_dir(p, dir, rand() & 3);
+  } 
+}
+
 void move_player(Player* p) {
   cputcxy(p->x, p->y, p->tail_attr);
   p->x += DIR_X[p->dir];
